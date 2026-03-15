@@ -1,5 +1,5 @@
 {
-  "name": "fast-a11y",
+  "name": "@probeo/fast-a11y",
   "version": "0.1.0",
   "description": "Fast, zero-DOM accessibility checker with axe-core compatible output. Runs on raw HTML using static analysis.",
   "type": "module",

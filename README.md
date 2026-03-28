@@ -154,6 +154,13 @@ const results = fastA11y(html, {
 
 Same output format. No async. No DOM. 100x less memory.
 
+## See Also
+
+| Package | Description |
+|---|---|
+| [fast-a11y-py](https://github.com/probeo-io/fast-a11y-py) | Python version of this package |
+| [@probeo/workflow](https://github.com/probeo-io/workflow) | Stage-based pipeline engine -- use fast-a11y as a step |
+
 ## License
 
 MIT

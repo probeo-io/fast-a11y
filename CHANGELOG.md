@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Exhaustive test suite (141 tests across 14 categories: images, links, headings, forms, ARIA, tables, language, semantic, media, navigation, landmarks, color contrast, rule filtering, edge cases)
+- "See Also" cross-links to related packages
+
 ## [0.1.1] - 2026-03-26
 
 ### Added

@@ -1,6 +1,11 @@
 # fast-a11y
 
-Fast, zero-DOM accessibility checker with **axe-core compatible output**. Runs on raw HTML using static analysis — no browser, no JSDOM, no Puppeteer.
+[![npm version](https://img.shields.io/npm/v/@probeo/fast-a11y)](https://www.npmjs.com/package/@probeo/fast-a11y)
+[![npm downloads](https://img.shields.io/npm/dm/@probeo/fast-a11y)](https://www.npmjs.com/package/@probeo/fast-a11y)
+[![license](https://img.shields.io/npm/l/@probeo/fast-a11y)](https://github.com/probeo-io/fast-a11y/blob/main/LICENSE)
+[![CI](https://github.com/probeo-io/fast-a11y/actions/workflows/ci.yml/badge.svg)](https://github.com/probeo-io/fast-a11y/actions/workflows/ci.yml)
+
+Fast, zero-DOM accessibility checker with **axe-core compatible output**. Runs on raw HTML using static analysis. No browser, no JSDOM, no Puppeteer.
 
 ## Why?
 
@@ -18,13 +23,13 @@ axe-core is the gold standard for accessibility testing, but it requires a full 
 ## Install
 
 ```bash
-npm install fast-a11y
+npm install @probeo/fast-a11y
 ```
 
 ## Usage
 
 ```typescript
-import { fastA11y } from "fast-a11y";
+import { fastA11y } from "@probeo/fast-a11y";
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -81,7 +86,7 @@ interface AxeResults {
 }
 ```
 
-Each `RuleResult` contains `id`, `impact`, `tags`, `description`, `help`, `helpUrl`, and `nodes[]` — exactly matching axe-core.
+Each `RuleResult` contains `id`, `impact`, `tags`, `description`, `help`, `helpUrl`, and `nodes[]`. Exactly matching axe-core.
 
 ## Rules Covered (86)
 
@@ -113,21 +118,21 @@ Each `RuleResult` contains `id`, `impact`, `tags`, `description`, `help`, `helpU
 `landmark-one-main`, `landmark-no-duplicate-main`, `landmark-no-duplicate-banner`, `landmark-no-duplicate-contentinfo`, `landmark-banner-is-top-level`, `landmark-contentinfo-is-top-level`, `landmark-complementary-is-top-level`, `landmark-main-is-top-level`, `landmark-unique`
 
 ### Color Contrast (best-effort)
-`color-contrast` — Checks inline styles and `<style>` blocks. Colors that can't be resolved statically (external CSS, var(), background images) are reported as `incomplete` rather than violations.
+`color-contrast` -- Checks inline styles and `<style>` blocks. Colors that can't be resolved statically (external CSS, var(), background images) are reported as `incomplete` rather than violations.
 
 ## Rules NOT Covered (~9)
 
 These rules fundamentally require a rendered DOM:
 
-- `target-size` — requires `getBoundingClientRect()`
-- `link-in-text-block` — requires computed styles
-- `css-orientation-lock` — requires CSS media query analysis
-- `p-as-heading` — requires computed font styling
-- `scrollable-region-focusable` — requires overflow computation
-- `focus-order-semantics` — requires tab order computation
-- `hidden-content` — requires full visibility computation
-- `label-content-name-mismatch` — requires rendered visible text
-- `frame-tested` — runtime axe concept
+- `target-size` -- requires `getBoundingClientRect()`
+- `link-in-text-block` -- requires computed styles
+- `css-orientation-lock` -- requires CSS media query analysis
+- `p-as-heading` -- requires computed font styling
+- `scrollable-region-focusable` -- requires overflow computation
+- `focus-order-semantics` -- requires tab order computation
+- `hidden-content` -- requires full visibility computation
+- `label-content-name-mismatch` -- requires rendered visible text
+- `frame-tested` -- runtime axe concept
 
 ## Replacing axe-core
 
@@ -145,7 +150,7 @@ const results = await dom.window.axe.run(dom.window.document, {
 });
 
 // After (fast-a11y)
-import { fastA11y } from "fast-a11y";
+import { fastA11y } from "@probeo/fast-a11y";
 
 const results = fastA11y(html, {
   runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },
@@ -160,6 +165,10 @@ Same output format. No async. No DOM. 100x less memory.
 |---|---|
 | [fast-a11y-py](https://github.com/probeo-io/fast-a11y-py) | Python version of this package |
 | [@probeo/workflow](https://github.com/probeo-io/workflow) | Stage-based pipeline engine -- use fast-a11y as a step |
+
+## Support
+
+If fast-a11y is useful to you, consider giving it a star. It helps others discover the project.
 
 ## License
 

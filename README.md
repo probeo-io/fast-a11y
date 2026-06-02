@@ -1,8 +1,8 @@
 # fast-a11y
 
-[![npm version](https://img.shields.io/npm/v/@probeo/fast-a11y)](https://www.npmjs.com/package/@probeo/fast-a11y)
-[![npm downloads](https://img.shields.io/npm/dm/@probeo/fast-a11y)](https://www.npmjs.com/package/@probeo/fast-a11y)
-[![license](https://img.shields.io/npm/l/@probeo/fast-a11y)](https://github.com/probeo-io/fast-a11y/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/fast-a11y)](https://www.npmjs.com/package/fast-a11y)
+[![npm downloads](https://img.shields.io/npm/dm/fast-a11y)](https://www.npmjs.com/package/fast-a11y)
+[![license](https://img.shields.io/npm/l/fast-a11y)](https://github.com/probeo-io/fast-a11y/blob/main/LICENSE)
 [![CI](https://github.com/probeo-io/fast-a11y/actions/workflows/ci.yml/badge.svg)](https://github.com/probeo-io/fast-a11y/actions/workflows/ci.yml)
 
 Fast, zero-DOM accessibility checker with **axe-core compatible output**. Runs on raw HTML using static analysis. No browser, no JSDOM, no Puppeteer.
@@ -23,13 +23,13 @@ axe-core is the gold standard for accessibility testing, but it requires a full 
 ## Install
 
 ```bash
-npm install @probeo/fast-a11y
+npm install fast-a11y
 ```
 
 ## Usage
 
 ```typescript
-import { fastA11y } from "@probeo/fast-a11y";
+import { fastA11y } from "fast-a11y";
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -214,7 +214,7 @@ const results = await dom.window.axe.run(dom.window.document, {
 });
 
 // After (fast-a11y)
-import { fastA11y } from "@probeo/fast-a11y";
+import { fastA11y } from "fast-a11y";
 
 const results = fastA11y(html, {
   runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },

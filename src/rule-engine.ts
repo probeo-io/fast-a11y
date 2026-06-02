@@ -8,10 +8,16 @@ import type { ImpactValue, NodeResult, CheckResult, RuleResult, RunOptions } fro
 import { RULE_META, type RuleMeta } from "./rule-meta.js";
 import { getSelector, getOuterHTML } from "./tree.js";
 
+/** Optional context passed to rules — carries data that rules may need beyond the HTML tree. */
+export interface RuleContext {
+  /** Pre-fetched external stylesheet contents. The caller is responsible for fetching them. */
+  externalStylesheets?: string[];
+}
+
 /** A rule function receives all nodes and returns violations/passes/incomplete. */
 export interface RuleCheck {
   ruleId: string;
-  run(nodes: FastNode[], allNodes: FastNode[]): RuleRunResult;
+  run(nodes: FastNode[], allNodes: FastNode[], context?: RuleContext): RuleRunResult;
 }
 
 export interface RuleRunResult {
@@ -101,6 +107,7 @@ export function runRules(
   rules: RuleCheck[],
   allNodes: FastNode[],
   options?: RunOptions,
+  context?: RuleContext,
 ): {
   passes: RuleResult[];
   violations: RuleResult[];
@@ -132,7 +139,7 @@ export function runRules(
       if (ruleConfig && !ruleConfig.enabled) continue;
     }
 
-    const result = rule.run(allNodes, allNodes);
+    const result = rule.run(allNodes, allNodes, context);
 
     // Build node results for violations
     const violationNodes = result.violations.map((n) =>

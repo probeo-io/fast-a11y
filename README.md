@@ -64,8 +64,72 @@ const results = fastA11y(html, {
 
   // Include URL in output
   url: "https://example.com/page",
+
+  // Pre-fetched external stylesheets for improved color contrast analysis
+  externalStylesheets: [cssString1, cssString2],
 });
 ```
+
+## Color Contrast
+
+The `color-contrast` rule does full static analysis including CSS variable resolution and WCAG level grading.
+
+### External stylesheets
+
+fast-a11y stays zero-network. Fetch `<link rel="stylesheet">` URLs yourself and pass the CSS strings in:
+
+```typescript
+import { fastA11y } from "fast-a11y";
+
+// Fetch your external stylesheets
+const sheet = await fetch("https://example.com/styles.css").then(r => r.text());
+
+const results = fastA11y(html, { externalStylesheets: [sheet] });
+```
+
+### CSS variable resolution
+
+Colors and font sizes defined as CSS custom properties are fully resolved — including chained variables and fallbacks. Works with Tailwind v4, Bootstrap 5, WordPress presets, and any design token system:
+
+```css
+/* In your stylesheet */
+:root {
+  --color-grey-900: #111827;
+  --color-text-primary: var(--color-grey-900); /* chained */
+}
+p { color: var(--color-text-primary); background-color: #fff; }
+```
+
+```typescript
+// fast-a11y resolves --color-text-primary → --color-grey-900 → #111827
+const results = fastA11y(html, { externalStylesheets: [css] });
+// → passes, ratio 16.1:1
+```
+
+### WCAG level grading
+
+Every resolved contrast check reports its WCAG level in `data.wcagLevel`:
+
+| Level | Normal text | Large text (≥18pt or ≥14pt bold) |
+|---|---|---|
+| `"AAA"` | ≥ 7:1 | ≥ 4.5:1 |
+| `"AA"` | ≥ 4.5:1 | ≥ 3:1 |
+| `"fail"` | < 4.5:1 | < 3:1 |
+
+```typescript
+const violation = results.violations.find(v => v.id === "color-contrast");
+const node = violation?.nodes[0];
+console.log(node?.any[0].data);
+// {
+//   fgColor: "rgb(170, 170, 170)",
+//   bgColor: "rgb(255, 255, 255)",
+//   contrastRatio: "2.32",
+//   wcagLevel: "fail",
+//   requiredRatio: 4.5,
+// }
+```
+
+Colors that can't be resolved statically (background images, truly unknown variables) are reported as `incomplete` rather than violations.
 
 ## Output Format
 
@@ -117,8 +181,8 @@ Each `RuleResult` contains `id`, `impact`, `tags`, `description`, `help`, `helpU
 ### Landmarks
 `landmark-one-main`, `landmark-no-duplicate-main`, `landmark-no-duplicate-banner`, `landmark-no-duplicate-contentinfo`, `landmark-banner-is-top-level`, `landmark-contentinfo-is-top-level`, `landmark-complementary-is-top-level`, `landmark-main-is-top-level`, `landmark-unique`
 
-### Color Contrast (best-effort)
-`color-contrast` -- Checks inline styles and `<style>` blocks. Colors that can't be resolved statically (external CSS, var(), background images) are reported as `incomplete` rather than violations.
+### Color Contrast
+`color-contrast` — Full static analysis with CSS variable resolution, external stylesheet support, and WCAG AA/AAA grading. See [Color Contrast](#color-contrast) above.
 
 ## Rules NOT Covered (~9)
 

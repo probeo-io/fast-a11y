@@ -7,7 +7,7 @@
  */
 
 import type { FastNode } from "../tree.js";
-import type { RuleCheck, RuleRunResult, NodeCheckDetail } from "../rule-engine.js";
+import type { RuleCheck, RuleRunResult, NodeCheckDetail, RuleContext } from "../rule-engine.js";
 import { makeCheck } from "../rule-engine.js";
 import { isHiddenOrAncestorHidden, findByTag, getNodeText, getTextContent } from "../tree.js";
 
@@ -74,9 +74,14 @@ const NAMED_COLORS: Record<string, [number, number, number, number]> = {
 type RGBA = [number, number, number, number]; // r, g, b in 0-255; a in 0-1
 
 /** Parse a CSS color string into RGBA. Returns null if unparseable. */
-function parseColor(color: string): RGBA | null {
+function parseColor(color: string, varMap?: Map<string, string>): RGBA | null {
   if (!color) return null;
-  const c = color.trim().toLowerCase();
+  let c = color.trim().toLowerCase();
+  if (c.includes("var(")) {
+    if (!varMap) return null;
+    c = resolveVarInString(c, varMap).trim().toLowerCase();
+    if (c.includes("var(")) return null;
+  }
 
   // Named colors
   if (NAMED_COLORS[c]) return [...NAMED_COLORS[c]];
@@ -201,6 +206,44 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
     Math.round(hue2rgb(p, q, h) * 255),
     Math.round(hue2rgb(p, q, h - 1/3) * 255),
   ];
+}
+
+/* ================================================================== */
+/*  CSS variable resolution                                            */
+/* ================================================================== */
+
+/** Replace var() references in a CSS value string using the resolved variable map. */
+function resolveVarInString(value: string, varMap: Map<string, string>): string {
+  return value.replace(
+    /var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\s*\)/g,
+    (_, name, fallback) => varMap.get(name.trim()) ?? fallback?.trim() ?? "",
+  );
+}
+
+/**
+ * Build a map of CSS custom property name → resolved value from all CSS sources.
+ * Resolves chained variables (--a: var(--b)) iteratively until stable.
+ */
+function buildVariableMap(allNodes: FastNode[], extraCss: string[] = []): Map<string, string> {
+  const varMap = new Map<string, string>();
+  const styleCss = allNodes.filter(n => n.tag === "style").map(n => getTextContent(n.raw));
+  for (const css of [...styleCss, ...extraCss]) {
+    for (const rule of parseStyleSheet(css)) {
+      for (const [prop, val] of rule.properties) {
+        if (prop.startsWith("--")) varMap.set(prop, val.trim());
+      }
+    }
+  }
+  for (let pass = 0; pass < 5; pass++) {
+    let changed = false;
+    for (const [key, val] of varMap) {
+      if (!val.includes("var(")) continue;
+      const next = resolveVarInString(val, varMap);
+      if (next !== val) { varMap.set(key, next); changed = true; }
+    }
+    if (!changed) break;
+  }
+  return varMap;
 }
 
 /* ================================================================== */
@@ -329,20 +372,18 @@ function getInlineStyleProperty(style: string, prop: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-/** Build a style map for all nodes from <style> blocks. */
-function buildStyleMap(allNodes: FastNode[]): Map<FastNode, Map<string, string>> {
+/** Build a style map for all nodes from <style> blocks and optional external stylesheets. */
+function buildStyleMap(allNodes: FastNode[], extraCss: string[] = []): Map<FastNode, Map<string, string>> {
   const styleMap = new Map<FastNode, Map<string, string>>();
   const styleRules: StyleRule[] = [];
 
-  // Collect all style blocks
   for (const node of allNodes) {
     if (node.tag === "style") {
       const text = getTextContent(node.raw);
-      if (text) {
-        styleRules.push(...parseStyleSheet(text));
-      }
+      if (text) styleRules.push(...parseStyleSheet(text));
     }
   }
+  for (const css of extraCss) styleRules.push(...parseStyleSheet(css));
 
   // Apply rules (later rules override earlier ones, mimicking cascade)
   for (const rule of styleRules) {
@@ -367,6 +408,7 @@ function buildStyleMap(allNodes: FastNode[]): Map<FastNode, Map<string, string>>
 function resolveStyles(
   node: FastNode,
   styleMap: Map<FastNode, Map<string, string>>,
+  varMap?: Map<string, string>,
 ): ResolvedStyles {
   let color: RGBA | null = null;
   let backgroundColor: RGBA | null = null;
@@ -391,7 +433,7 @@ function resolveStyles(
     const sheetColor = sheetStyles?.get("color");
     const colorVal = inlineColor || sheetColor;
     if (colorVal) {
-      const parsed = parseColor(colorVal);
+      const parsed = parseColor(colorVal, varMap);
       if (parsed) color = parsed;
       else if (colorVal !== "inherit" && colorVal !== "initial" && colorVal !== "unset") {
         color = null; // Can't resolve
@@ -407,21 +449,21 @@ function resolveStyles(
 
     const bgVal = inlineBg || sheetBg || extractBgColor(inlineBgShort) || extractBgColor(sheetBgShort);
     if (bgVal) {
-      const parsed = parseColor(bgVal);
+      const parsed = parseColor(bgVal, varMap);
       if (parsed) backgroundColor = parsed;
     }
 
     // Font-size inherits
     const inlineFs = getInlineStyleProperty(inline, "font-size");
     const sheetFs = sheetStyles?.get("font-size");
-    if (inlineFs) fontSize = inlineFs;
-    else if (sheetFs) fontSize = sheetFs;
+    const rawFs = inlineFs || sheetFs || null;
+    if (rawFs) fontSize = (varMap && rawFs.includes("var(")) ? resolveVarInString(rawFs, varMap) : rawFs;
 
     // Font-weight inherits
     const inlineFw = getInlineStyleProperty(inline, "font-weight");
     const sheetFw = sheetStyles?.get("font-weight");
-    if (inlineFw) fontWeight = inlineFw;
-    else if (sheetFw) fontWeight = sheetFw;
+    const rawFw = inlineFw || sheetFw || null;
+    if (rawFw) fontWeight = (varMap && rawFw.includes("var(")) ? resolveVarInString(rawFw, varMap) : rawFw;
   }
 
   return { color, backgroundColor, fontSize, fontWeight };
@@ -478,6 +520,15 @@ function alphaComposite(fg: RGBA, bg: RGBA): RGBA {
   ];
 }
 
+/** Return the highest WCAG level met for a given contrast ratio and text size. */
+function wcagLevel(ratio: number, large: boolean): "AAA" | "AA" | "fail" {
+  const aaaThreshold = large ? 4.5 : 7;
+  const aaThreshold = large ? 3 : 4.5;
+  if (ratio >= aaaThreshold) return "AAA";
+  if (ratio >= aaThreshold) return "AA";
+  return "fail";
+}
+
 /** Check if text is "large" per WCAG (>= 18pt or >= 14pt bold). */
 function isLargeText(fontSize: string | null, fontWeight: string | null): boolean {
   if (!fontSize) return false;
@@ -522,14 +573,15 @@ const SKIP_TAGS = new Set([
 /* ================================================================== */
 const colorContrast: RuleCheck = {
   ruleId: "color-contrast",
-  run(nodes: FastNode[], allNodes: FastNode[]): RuleRunResult {
+  run(nodes: FastNode[], allNodes: FastNode[], context?: RuleContext): RuleRunResult {
     const violations: FastNode[] = [];
     const passes: FastNode[] = [];
     const incomplete: FastNode[] = [];
     const checkDetails = new Map<FastNode, NodeCheckDetail>();
 
-    // Build stylesheet map once
-    const styleMap = buildStyleMap(allNodes);
+    const extraCss = context?.externalStylesheets ?? [];
+    const styleMap = buildStyleMap(allNodes, extraCss);
+    const varMap = buildVariableMap(allNodes, extraCss);
 
     // Default colors: black text on white background
     const DEFAULT_FG: RGBA = [0, 0, 0, 1];
@@ -545,7 +597,7 @@ const colorContrast: RuleCheck = {
       );
       if (!hasDirectText) continue;
 
-      const styles = resolveStyles(node, styleMap);
+      const styles = resolveStyles(node, styleMap, varMap);
       const fg = styles.color;
       const bg = styles.backgroundColor;
 
@@ -599,31 +651,32 @@ const colorContrast: RuleCheck = {
 
       const ratio = contrastRatio(fgColor, bgColor);
       const large = isLargeText(styles.fontSize, styles.fontWeight);
-      const requiredRatio = large ? 3 : 4.5;
+      const level = wcagLevel(ratio, large);
 
       const ratioStr = ratio.toFixed(2);
       const fgStr = "rgb(" + fgColor[0] + ", " + fgColor[1] + ", " + fgColor[2] + ")";
       const bgStr = "rgb(" + bgColor[0] + ", " + bgColor[1] + ", " + bgColor[2] + ")";
+      const sizeLabel = large ? " [large text]" : "";
+      const baseData = { fgColor: fgStr, bgColor: bgStr, contrastRatio: ratioStr, wcagLevel: level, fontSize: styles.fontSize, fontWeight: styles.fontWeight };
 
-      if (ratio >= requiredRatio) {
+      if (level !== "fail") {
         passes.push(node);
         checkDetails.set(node, {
           any: [makeCheck("color-contrast", "serious",
-            "Element has sufficient contrast ratio of " + ratioStr + ":1" +
-            " (foreground: " + fgStr + ", background: " + bgStr + ")" +
-            (large ? " [large text]" : ""),
-            { fgColor: fgStr, bgColor: bgStr, contrastRatio: ratioStr, fontSize: styles.fontSize, fontWeight: styles.fontWeight },
+            "Element has sufficient contrast ratio of " + ratioStr + ":1 (WCAG " + level + ")" +
+            " (foreground: " + fgStr + ", background: " + bgStr + ")" + sizeLabel,
+            baseData,
           )],
         });
       } else {
         violations.push(node);
+        const required = large ? 3 : 4.5;
         checkDetails.set(node, {
           any: [makeCheck("color-contrast", "serious",
             "Element has insufficient contrast ratio of " + ratioStr + ":1" +
             " (foreground: " + fgStr + ", background: " + bgStr + ")" +
-            ". Expected ratio of " + requiredRatio + ":1" +
-            (large ? " [large text]" : ""),
-            { fgColor: fgStr, bgColor: bgStr, contrastRatio: ratioStr, expectedRatio: requiredRatio, fontSize: styles.fontSize, fontWeight: styles.fontWeight },
+            ". Required " + required + ":1 for WCAG AA" + sizeLabel,
+            { ...baseData, requiredRatio: required },
           )],
         });
       }

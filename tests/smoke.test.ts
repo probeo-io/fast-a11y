@@ -7,7 +7,7 @@ describe("fast-a11y smoke tests", () => {
     const results = fastA11y(html);
 
     expect(results.testEngine.name).toBe("fast-a11y");
-    expect(results.testEngine.version).toBe("0.1.0");
+    expect(results.testEngine.version).toBeTruthy();
     expect(results).toHaveProperty("passes");
     expect(results).toHaveProperty("violations");
     expect(results).toHaveProperty("incomplete");

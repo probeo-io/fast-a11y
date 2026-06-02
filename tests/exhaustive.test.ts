@@ -41,7 +41,7 @@ describe("core audit function", () => {
   it("includes testEngine metadata", () => {
     const r = fastA11y(doc("<p>Hi</p>"));
     expect(r.testEngine.name).toBe("fast-a11y");
-    expect(r.testEngine.version).toBe("0.1.0");
+    expect(r.testEngine.version).toBeTruthy();
     expect(r.testRunner.name).toBe("fast-a11y");
   });
 

@@ -8,16 +8,22 @@
 
 import { parse, buildTree } from "./tree.js";
 import { runRules } from "./rule-engine.js";
+import type { RuleContext } from "./rule-engine.js";
 import { getAllRules } from "./rules/index.js";
 import type { AxeResults, RunOptions } from "./types.js";
 
 export type { AxeResults, RunOptions, ImpactValue, RuleResult, NodeResult, CheckResult, RelatedNode } from "./types.js";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 export interface FastA11yOptions extends RunOptions {
   /** URL of the page being tested (included in output). */
   url?: string;
+  /**
+   * Pre-fetched external stylesheet contents for improved color contrast analysis.
+   * The caller fetches <link rel="stylesheet"> URLs; fast-a11y stays zero-network.
+   */
+  externalStylesheets?: string[];
 }
 
 /**
@@ -29,10 +35,12 @@ export function fastA11y(html: string, options?: FastA11yOptions): AxeResults {
   const allNodes = buildTree(doc);
   const rules = getAllRules();
 
+  const context: RuleContext = { externalStylesheets: options?.externalStylesheets };
   const { passes, violations, incomplete, inapplicable } = runRules(
     rules,
     allNodes,
     options,
+    context,
   );
 
   return {

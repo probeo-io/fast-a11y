@@ -1,6 +1,6 @@
 {
   "name": "@probeo/fast-a11y",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Fast, zero-DOM accessibility checker with axe-core compatible output. Runs on raw HTML using static analysis.",
   "type": "module",
   "main": "./dist/index.js",

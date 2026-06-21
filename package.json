@@ -16,7 +16,6 @@
     "dist"
   ],
   "scripts": {
-    "prepare": "npm run build",
     "build": "tsc",
     "test": "node --experimental-vm-modules node_modules/.bin/vitest run",
     "test:watch": "node --experimental-vm-modules node_modules/.bin/vitest",

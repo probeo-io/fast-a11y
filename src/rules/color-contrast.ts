@@ -582,6 +582,10 @@ const colorContrast: RuleCheck = {
     const extraCss = context?.externalStylesheets ?? [];
     const styleMap = buildStyleMap(allNodes, extraCss);
     const varMap = buildVariableMap(allNodes, extraCss);
+    const hasUnloadedStylesheet = extraCss.length === 0 && allNodes.some(
+      (node) => node.tag === "link" &&
+        (node.attrs.rel || "").toLowerCase().split(/\s+/).includes("stylesheet")
+    );
 
     // Default colors: black text on white background
     const DEFAULT_FG: RGBA = [0, 0, 0, 1];
@@ -610,6 +614,18 @@ const colorContrast: RuleCheck = {
           // This is common and not worth flagging for every element
           continue;
         }
+        continue;
+      }
+
+      // A linked stylesheet may define the missing foreground or background.
+      // Do not report a measured failure against browser defaults when we have
+      // not loaded that stylesheet (common for light text on a dark CSS panel).
+      if (hasUnloadedStylesheet && (!fg || !bg)) {
+        incomplete.push(node);
+        checkDetails.set(node, {
+          any: [makeCheck("color-contrast", "serious",
+            "Linked stylesheet was not provided — cannot determine contrast ratio")],
+        });
         continue;
       }
 

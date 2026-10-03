@@ -110,6 +110,23 @@ describe("color-contrast — CSS variable resolution", () => {
 // ─────────────────────────────────────────────
 
 describe("color-contrast — external stylesheets", () => {
+  it("marks contrast incomplete when a linked stylesheet may supply the missing background", () => {
+    const page = '<!DOCTYPE html><html lang="en"><head><title>T</title><link rel="stylesheet" href="/site.css"><style>.light { color: #f7f5f1; }</style></head><body><div class="slab"><p class="light">MCP agent testing</p></div></body></html>';
+    const { violations, incomplete } = contrastResult(fastA11y(page));
+    expect(violations).toBeUndefined();
+    expect(incomplete?.nodes).toHaveLength(1);
+  });
+
+  it("measures the same text when its linked stylesheet is provided", () => {
+    const page = '<!DOCTYPE html><html lang="en"><head><title>T</title><link rel="stylesheet" href="/site.css"><style>.light { color: #f7f5f1; }</style></head><body><div class="slab"><p class="light">MCP agent testing</p></div></body></html>';
+    const { violations, passes, incomplete } = contrastResult(fastA11y(page, {
+      externalStylesheets: ['.slab { background-color: #14161c; }'],
+    }));
+    expect(violations).toBeUndefined();
+    expect(passes?.nodes).toHaveLength(1);
+    expect(incomplete).toBeUndefined();
+  });
+
   it("resolves color variables defined in external stylesheet", () => {
     // Variables defined externally, applied via inline style
     const externalCss = `:root { --color-primary: #1a1a2e; --color-bg: #ffffff; }`;

@@ -316,7 +316,9 @@ export function isFocusable(node: FastNode): boolean {
 
 /** Check if a node is interactive. */
 export function isInteractive(node: FastNode): boolean {
-  const interactiveTags = new Set(["a", "button", "input", "select", "textarea", "summary", "details"]);
+  // <summary> is the control for <details>; the details content is allowed to
+  // contain links and other interactive elements.
+  const interactiveTags = new Set(["a", "button", "input", "select", "textarea", "summary"]);
   if (interactiveTags.has(node.tag)) {
     if (node.tag === "a" && node.attrs.href === undefined) return false;
     if (node.tag === "input" && node.attrs.type === "hidden") return false;

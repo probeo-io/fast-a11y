@@ -612,6 +612,18 @@ describe("semantic and structure", () => {
     expect(hasViolation(r, "nested-interactive")).toBe(false);
   });
 
+  it("allows links and nested disclosure groups inside details content", () => {
+    const r = fastA11y(doc('<details open><summary>SEO</summary><a href="/tags">Tags</a><details><summary>Structured data</summary><a href="/schema">Schema</a></details></details>'));
+    expect(hasViolation(r, "nested-interactive")).toBe(false);
+  });
+
+  it("still flags a link nested inside the summary control", () => {
+    const r = fastA11y(doc('<details><summary>SEO <a href="/tags">Tags</a></summary><a href="/schema">Schema</a></details>'));
+    const violation = r.violations.find((v) => v.id === "nested-interactive");
+    expect(violation?.nodes).toHaveLength(1);
+    expect(violation?.nodes[0].html).toContain('<summary>');
+  });
+
   it("flags blink element", () => {
     const r = fastA11y(doc("<blink>Warning</blink>"));
     expect(hasViolation(r, "blink")).toBe(true);

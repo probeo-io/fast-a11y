@@ -269,7 +269,9 @@ export function isFocusable(node) {
 }
 /** Check if a node is interactive. */
 export function isInteractive(node) {
-    const interactiveTags = new Set(["a", "button", "input", "select", "textarea", "summary", "details"]);
+    // <summary> is the control for <details>; the details content is allowed to
+    // contain links and other interactive elements.
+    const interactiveTags = new Set(["a", "button", "input", "select", "textarea", "summary"]);
     if (interactiveTags.has(node.tag)) {
         if (node.tag === "a" && node.attrs.href === undefined)
             return false;

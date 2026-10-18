@@ -117,6 +117,9 @@ function getNativeName(node: FastNode, allNodes: FastNode[]): string {
     return getAccessibleText(node, allNodes);
   }
 
+  // Forms take their name from author labels or title, not their controls.
+  if (tag === "form") return "";
+
   // Generic: text content
   const text = getNodeText(node);
   if (text) return text;

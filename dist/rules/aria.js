@@ -488,8 +488,12 @@ const ariaRequiredParent = {
             const requiredParents = REQUIRED_PARENT[role];
             if (!requiredParents || requiredParents.length === 0)
                 continue;
+            // Native single-select options are owned by a combobox. This exception
+            // does not apply to author-created ARIA options inside a combobox.
+            const nativeSelect = node.parent?.tag === "optgroup" ? node.parent.parent : node.parent;
+            let found = role === "option" && node.tag === "option" &&
+                nativeSelect?.tag === "select" && getEffectiveRole(nativeSelect) === "combobox";
             // Walk up ancestors to find required parent role
-            let found = false;
             let current = node.parent;
             while (current) {
                 const parentRole = getEffectiveRole(current);

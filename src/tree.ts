@@ -224,6 +224,35 @@ export function findById(nodes: FastNode[], id: string): FastNode | undefined {
   return nodes.find((n) => n.attrs.id === id);
 }
 
+const SECTIONING_TAGS = new Set(["article", "aside", "main", "nav", "section"]);
+const SECTIONING_ROLES = new Set(["article", "complementary", "main", "navigation", "region"]);
+
+function isSectionScoped(node: FastNode): boolean {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (SECTIONING_TAGS.has(parent.tag) || SECTIONING_ROLES.has(parent.attrs.role)) return true;
+  }
+  return false;
+}
+
+/** Forms become landmarks only when named by the author, never by their contents. */
+function hasFormName(node: FastNode): boolean {
+  if (node.attrs["aria-label"]?.trim() || node.attrs.title?.trim()) return true;
+  const ids = node.attrs["aria-labelledby"]?.trim().split(/\s+/).filter(Boolean);
+  if (!ids?.length) return false;
+
+  // Follow the parsed document so references also work across fragment roots.
+  let root: Node = node.raw;
+  while (root.parent) root = root.parent;
+  function hasNamedReference(current: Node): boolean {
+    if ("attribs" in current) {
+      const el = current as Element;
+      if (ids!.includes(el.attribs.id) && getTextContent(el).trim()) return true;
+    }
+    return "childNodes" in current && (current.childNodes as ChildNode[]).some(hasNamedReference);
+  }
+  return hasNamedReference(root);
+}
+
 /** Check if a node has a specific role (explicit or implicit). */
 export function getRole(node: FastNode): string | undefined {
   if (node.attrs.role) return node.attrs.role;
@@ -236,15 +265,15 @@ export function getRole(node: FastNode): string | undefined {
     button: "button",
     details: "group",
     dialog: "dialog",
-    footer: "contentinfo",
-    form: "form",
+    footer: (n) => isSectionScoped(n) ? undefined : "contentinfo",
+    form: (n) => hasFormName(n) ? "form" : undefined,
     h1: "heading",
     h2: "heading",
     h3: "heading",
     h4: "heading",
     h5: "heading",
     h6: "heading",
-    header: "banner",
+    header: (n) => isSectionScoped(n) ? undefined : "banner",
     hr: "separator",
     img: (n) => n.attrs.alt === "" ? "presentation" : "img",
     input: (n) => {

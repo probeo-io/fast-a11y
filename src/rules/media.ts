@@ -336,11 +336,11 @@ const videoCaption: RuleCheck = {
     for (const node of findByTag(nodes, "video")) {
       if (isHiddenOrAncestorHidden(node)) continue;
 
-      // Check for <track kind="captions"> or <track kind="subtitles">
+      // Subtitles alone do not establish captions for speech and other audio.
       const hasCaption = node.children.some(
         (child) =>
           child.tag === "track" &&
-          (child.attrs.kind === "captions" || child.attrs.kind === "subtitles")
+          child.attrs.kind?.toLowerCase() === "captions"
       );
 
       if (hasCaption) {

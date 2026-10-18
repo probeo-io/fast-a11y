@@ -14,7 +14,7 @@ import type { AxeResults, RunOptions } from "./types.js";
 
 export type { AxeResults, RunOptions, ImpactValue, RuleResult, NodeResult, CheckResult, RelatedNode } from "./types.js";
 
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 export interface FastA11yOptions extends RunOptions {
   /** URL of the page being tested (included in output). */

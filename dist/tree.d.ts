@@ -45,8 +45,10 @@ export declare function getRole(node: FastNode): string | undefined;
 export declare function isFocusable(node: FastNode): boolean;
 /** Check if a node is interactive. */
 export declare function isInteractive(node: FastNode): boolean;
-/** Check if a node is hidden via static analysis. */
+/** Rendering visibility only: aria-hidden does not prevent keyboard focus. */
+export declare function isRenderHiddenOrAncestorHidden(node: FastNode): boolean;
+/** Check if a node itself is hidden via static analysis. */
 export declare function isHidden(node: FastNode): boolean;
-/** Check if a node or any ancestor is hidden. */
+/** Check rendering and accessibility-tree hiding separately. */
 export declare function isHiddenOrAncestorHidden(node: FastNode): boolean;
 //# sourceMappingURL=tree.d.ts.map

@@ -280,6 +280,13 @@ export function getRole(node) {
 }
 /** Check if a node is focusable. */
 export function isFocusable(node) {
+    // aria-hidden removes content from assistive technology, not keyboard focus.
+    if (isRenderHiddenOrAncestorHidden(node))
+        return false;
+    for (let current = node; current; current = current.parent) {
+        if (current.attrs.inert !== undefined)
+            return false;
+    }
     // Explicitly non-focusable
     if (node.attrs.disabled !== undefined)
         return false;
@@ -323,28 +330,52 @@ export function isInteractive(node) {
     }
     return false;
 }
-/** Check if a node is hidden via static analysis. */
-export function isHidden(node) {
-    if (node.attrs.hidden !== undefined)
-        return true;
-    if (node.attrs["aria-hidden"] === "true")
-        return true;
-    if (node.tag === "input" && node.attrs.type === "hidden")
-        return true;
-    const style = node.attrs.style || "";
-    if (/display\s*:\s*none/i.test(style))
-        return true;
-    if (/visibility\s*:\s*hidden/i.test(style))
-        return true;
-    return false;
+/** Read the last supported inline declaration, honoring !important. No stylesheet resolution. */
+function inlineStyle(node, property) {
+    let result;
+    let important = false;
+    for (const declaration of (node.attrs.style || "").replace(/\/\*[\s\S]*?\*\//g, "").split(";")) {
+        const match = declaration.match(/^\s*([\w-]+)\s*:\s*([\w-]+)\s*(!\s*important)?\s*$/i);
+        if (!match || match[1].toLowerCase() !== property)
+            continue;
+        if (!important || match[3]) {
+            result = match[2].toLowerCase();
+            important = Boolean(match[3]);
+        }
+    }
+    return result;
 }
-/** Check if a node or any ancestor is hidden. */
-export function isHiddenOrAncestorHidden(node) {
-    let current = node;
-    while (current) {
-        if (isHidden(current))
+/** Rendering visibility only: aria-hidden does not prevent keyboard focus. */
+export function isRenderHiddenOrAncestorHidden(node) {
+    let visibility;
+    for (let current = node; current; current = current.parent) {
+        if (current.attrs.hidden !== undefined || current.tag === "template")
             return true;
-        current = current.parent;
+        if (current.tag === "input" && current.attrs.type?.toLowerCase() === "hidden")
+            return true;
+        if (inlineStyle(current, "display") === "none")
+            return true;
+        const value = inlineStyle(current, "visibility");
+        if (visibility === undefined && value && value !== "inherit" && value !== "unset")
+            visibility = value;
+    }
+    return visibility === "hidden" || visibility === "collapse";
+}
+/** Check if a node itself is hidden via static analysis. */
+export function isHidden(node) {
+    return node.attrs.hidden !== undefined || node.tag === "template"
+        || node.attrs["aria-hidden"] === "true"
+        || (node.tag === "input" && node.attrs.type?.toLowerCase() === "hidden")
+        || inlineStyle(node, "display") === "none"
+        || ["hidden", "collapse"].includes(inlineStyle(node, "visibility") || "");
+}
+/** Check rendering and accessibility-tree hiding separately. */
+export function isHiddenOrAncestorHidden(node) {
+    if (isRenderHiddenOrAncestorHidden(node))
+        return true;
+    for (let current = node; current; current = current.parent) {
+        if (current.attrs["aria-hidden"] === "true")
+            return true;
     }
     return false;
 }

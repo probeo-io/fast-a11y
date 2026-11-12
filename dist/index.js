@@ -8,7 +8,7 @@
 import { parse, buildTree } from "./tree.js";
 import { runRules } from "./rule-engine.js";
 import { getAllRules } from "./rules/index.js";
-const VERSION = "0.2.1";
+const VERSION = "0.2.2";
 /**
  * Run accessibility checks on raw HTML.
  * Returns axe-core compatible AxeResults.

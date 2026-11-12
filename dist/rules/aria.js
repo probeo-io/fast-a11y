@@ -343,9 +343,8 @@ const ariaHiddenFocus = {
         for (const node of nodes) {
             if (node.attrs["aria-hidden"] !== "true")
                 continue;
-            // Check if this node itself is focusable (tabindex !== -1 makes it focusable
-            // but aria-hidden should prevent focus — we flag elements that are
-            // focusable with tabindex >= 0 or natively focusable)
+            // aria-hidden alone does not remove elements from keyboard navigation.
+            // isFocusable excludes rendering-hidden and inert content, including ancestors.
             const selfFocusable = isFocusable(node);
             const descendantFocusable = hasFocusableDescendant(node);
             if (selfFocusable || descendantFocusable) {

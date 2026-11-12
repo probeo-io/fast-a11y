@@ -3,7 +3,7 @@
  * bypass, tabindex, accesskeys, region
  */
 import { makeCheck } from "../rule-engine.js";
-import { isHiddenOrAncestorHidden, findByTag, getRole, } from "../tree.js";
+import { isHiddenOrAncestorHidden, findByTag, getRole, isFocusable, } from "../tree.js";
 import { getAccessibleName } from "../utils/accessible-name.js";
 /** Landmark roles. */
 const LANDMARK_ROLES = new Set([
@@ -312,6 +312,18 @@ const region = {
             }
             return false;
         }
+        // Empty mount points have no content to place in a landmark. Preserve
+        // non-text content such as images, controls, media and named widgets.
+        function hasContent(node) {
+            if (ignoredTags.has(node.tag) || isHiddenOrAncestorHidden(node))
+                return false;
+            if (node.childNodes.some(child => child.type === "text" && child.data.trim()))
+                return true;
+            if (["img", "svg", "canvas", "video", "audio", "iframe", "object", "embed", "input", "button", "select", "textarea", "hr"].includes(node.tag)
+                || isFocusable(node) || node.attrs["aria-label"]?.trim() || node.attrs["aria-labelledby"]?.trim())
+                return true;
+            return node.children.some(hasContent);
+        }
         // Check body's direct children (top-level elements) that are not landmarks
         const bodyNodes = findByTag(nodes, "body");
         if (bodyNodes.length === 0)
@@ -344,7 +356,7 @@ const region = {
                         any: [makeCheck("region", "moderate", "Element is a landmark")],
                     });
                 }
-                else if (isTopLevel && node.parent?.tag === "body") {
+                else if (isTopLevel && node.parent?.tag === "body" && hasContent(node)) {
                     // Only flag direct children of body that are not landmarks
                     violations.push(node);
                     checkDetails.set(node, {

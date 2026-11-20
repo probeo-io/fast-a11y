@@ -111,6 +111,9 @@ function getNativeName(node, allNodes) {
     if (tag === "a" || tag === "button" || /^h[1-6]$/.test(tag) || tag === "summary" || tag === "legend" || tag === "caption" || tag === "option") {
         return getAccessibleText(node, allNodes);
     }
+    // Forms take their name from author labels or title, not their controls.
+    if (tag === "form")
+        return "";
     // Generic: text content
     const text = getNodeText(node);
     if (text)

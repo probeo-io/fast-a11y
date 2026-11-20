@@ -166,7 +166,7 @@ export const RULE_META: Record<string, RuleMeta> = {
     "Ensures form field does not have multiple label elements"),
 
   "autocomplete-valid": meta("autocomplete-valid", "serious",
-    ["cat.forms", "wcag21a", "wcag135"],
+    ["cat.forms", "wcag21aa", "wcag135"],
     "autocomplete attribute must be used correctly",
     "Ensures the autocomplete attribute is correct and suitable for the form field"),
 
@@ -449,8 +449,8 @@ export const RULE_META: Record<string, RuleMeta> = {
 
   "landmark-unique": meta("landmark-unique", "moderate",
     ["cat.semantics", "best-practice"],
-    "Ensures landmarks are unique",
-    "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination"),
+    "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination",
+    "Ensures landmarks are unique"),
 
   "region": meta("region", "moderate",
     ["cat.keyboard", "best-practice"],

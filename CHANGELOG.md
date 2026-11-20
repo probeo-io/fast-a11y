@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-10-17
+
+### Fixed
+
+- Scope implicit header/footer landmarks to their sectioning context and require an author-provided accessible name for form landmarks.
+- Use author labels or title rather than control text when comparing form landmark names.
+- Recognize native single-select option ownership without permitting ARIA options inside arbitrary comboboxes.
+- Tag autocomplete-valid as WCAG 2.1 AA and correct landmark-unique help/description ordering.
+- Require captions rather than subtitles for video-caption passes and accept case-insensitive track kinds. Missing captions remain manual-review results in `incomplete`.
+
 ## [0.2.0] - 2026-06-01
 
 ### Added

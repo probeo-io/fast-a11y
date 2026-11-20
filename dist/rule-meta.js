@@ -45,7 +45,7 @@ export const RULE_META = {
     "select-name": meta("select-name", "critical", ["cat.forms", "wcag2a", "wcag412", "wcag131", "section508", "section508.22.n", "ACT"], "Select element must have an accessible name", "Ensures select element has an accessible name"),
     "input-button-name": meta("input-button-name", "critical", ["cat.forms", "wcag2a", "wcag412", "section508", "section508.22.a"], "Input buttons must have discernible text", "Ensures input buttons have discernible text"),
     "form-field-multiple-labels": meta("form-field-multiple-labels", "moderate", ["cat.forms", "wcag2a", "wcag412"], "Form field should not have multiple label elements", "Ensures form field does not have multiple label elements"),
-    "autocomplete-valid": meta("autocomplete-valid", "serious", ["cat.forms", "wcag21a", "wcag135"], "autocomplete attribute must be used correctly", "Ensures the autocomplete attribute is correct and suitable for the form field"),
+    "autocomplete-valid": meta("autocomplete-valid", "serious", ["cat.forms", "wcag21aa", "wcag135"], "autocomplete attribute must be used correctly", "Ensures the autocomplete attribute is correct and suitable for the form field"),
     // Name/Role/Value
     "button-name": meta("button-name", "critical", ["cat.name-role-value", "wcag2a", "wcag412", "section508", "section508.22.a", "ACT"], "Buttons must have discernible text", "Ensures buttons have discernible text"),
     "link-name": meta("link-name", "serious", ["cat.name-role-value", "wcag2a", "wcag412", "wcag244", "section508", "section508.22.a", "ACT"], "Links must have discernible text", "Ensures links have discernible text"),
@@ -107,7 +107,7 @@ export const RULE_META = {
     "landmark-complementary-is-top-level": meta("landmark-complementary-is-top-level", "moderate", ["cat.semantics", "best-practice"], "Aside should not be contained in another landmark", "Ensures the complementary landmark or aside is at top level"),
     "landmark-main-is-top-level": meta("landmark-main-is-top-level", "moderate", ["cat.semantics", "best-practice"], "Main landmark should not be contained in another landmark", "Ensures the main landmark is at top level"),
     "page-has-heading-one": meta("page-has-heading-one", "moderate", ["cat.semantics", "best-practice"], "Page should contain a level-one heading", "Ensure that the page, or at least one of its frames contains a level-one heading"),
-    "landmark-unique": meta("landmark-unique", "moderate", ["cat.semantics", "best-practice"], "Ensures landmarks are unique", "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination"),
+    "landmark-unique": meta("landmark-unique", "moderate", ["cat.semantics", "best-practice"], "Landmarks should have a unique role or role/label/title (i.e. accessible name) combination", "Ensures landmarks are unique"),
     "region": meta("region", "moderate", ["cat.keyboard", "best-practice"], "All page content should be contained by landmarks", "Ensures all page content is contained by landmarks"),
     // Bypass
     "bypass": meta("bypass", "serious", ["cat.keyboard", "wcag2a", "wcag241", "section508", "section508.22.o"], "Page must have means to bypass repeated blocks", "Ensures each page has at least one mechanism for a user to bypass navigation and jump straight to the content"),
